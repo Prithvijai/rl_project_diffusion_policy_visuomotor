@@ -22,7 +22,7 @@ vid_H = 360
 vid_W = 640
 device = "cuda"
 
-# --- LOAD POLICY ---
+# This where we can our LOAD POLICY ---
 pretrained_policy_path = Path("/media/saitama/Games1/Documents_ubuntu/lerobot/outputs/train/my_pusht_diffusion/20251119160215")
 policy = DiffusionPolicy.from_pretrained(pretrained_policy_path)
 policy.reset()

@@ -18,7 +18,7 @@ from math import sin, cos, pi
 
 bridge = CvBridge()
 
-tool_pose_xy = [0.0, 0.0] # tool(end effector) pose
+tool_pose_xy = [0.0, 0.0] 
 tbar_pose_xyw = [0.0, 0.0, 0.0]
 vid_H = 360
 vid_W = 640
@@ -31,7 +31,7 @@ from lerobot.common.policies.diffusion.modeling_diffusion import DiffusionPolicy
 #output_directory = Path("outputs/eval/example_pusht_diffusion")
 #output_directory.mkdir(parents=True, exist_ok=True)
 
-# Select your device
+
 device = "cuda"
 
 # Provide the [hugging face repo id](https://huggingface.co/lerobot/diffusion_pusht):
