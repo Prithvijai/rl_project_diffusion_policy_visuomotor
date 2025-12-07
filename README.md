@@ -11,7 +11,7 @@
 ## Project Report: Visuomotor Policy Learning via Action Diffusion
 
 ### 1. Abstract
-This project implements **Diffusion Policy**, a novel reinforcement learning framework that generates robot action sequences by iteratively denoising random noise. We applied this method to the **Push-T block manipulation task**, training a UR5 robotic arm to push a T-shaped block into a target zone using only visual feedback. The system was validated in both 2D (Gym-PushT) and 3D (NVIDIA Isaac Sim) environments.
+This project implements **Diffusion Policy**, a novel reinforcement learning framework that generates robot action sequences by iteratively denoising random noise. We applied this method to the **Push-T block manipulation task**, training a UR5 robotic arm to push a T-shaped block into a target zone using only state/visual feedback. The system was validated in both 2D (Gym-PushT) and 3D (NVIDIA Isaac Sim) environments.
 
 ### 2. Methodology
 
@@ -49,15 +49,20 @@ The model was trained on the PushT dataset (206 episodes) for 5000 steps.
 ### 1. Download Project Files
 **CRITICAL**: You must download the full project repository, which includes the custom `ur5_simulation` assets and configuration files.
 *   [**Download Project Zip (Google Drive)**](https://drive.google.com/file/d/126dnCWyt8QnDNPsZq9z9n-ZXegeQzqoE/view?usp=sharing)
-*   **Action**: Download, unzip, and place the `ur5_simulation` folder in your workspace.
+*   **Action**: Download, unzip, and place the contents in your workspace.
+    *   *Note: The Python scripts in this repository (`3_train_policy_mod.py`, etc.) are copies of the files found in the zip archive under `lerobot/examples`.*
 
-### 2. System Requirements
+### 2. Trained Model Checkpoints
+Our trained model checkpoints are hosted on Hugging Face. You can download them to skip training and proceed directly to evaluation.
+*   [**Hugging Face Repo: diffusion_policy_custom_isaacsim**](https://huggingface.co/Saitama0510/diffusion_policy_custom_isaacsim/tree/main)
+
+### 3. System Requirements
 *   **OS**: Ubuntu 22.04 (Recommended) or 20.04
 *   **GPU**: NVIDIA GPU with CUDA support
 
-### 3. Install Dependencies
+### 4. Install Dependencies
 *   **NVIDIA Isaac Sim**: Download and install from the [Isaac Sim Archive](https://developer.nvidia.com/isaac-sim-archive).
-*   **ROS 2 Humble**: Follow the [official installation guide](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html) for Ubuntu 22.04.
+*   **ROS 2 Humble**: Follow the [official installation guide](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html).
 *   **MoveIt 2**: Install MoveIt 2 for motion planning.
     ```bash
     sudo apt install ros-humble-moveit
@@ -69,7 +74,17 @@ The model was trained on the PushT dataset (206 episodes) for 5000 steps.
     pip install -e ".[pusht]"
     ```
 
-### 4. Environment Setup
+### 5. UR5 Simulation Setup
+You need to build the `ur5_simulation` package included in the downloaded zip.
+1.  Navigate to your ROS 2 workspace (e.g., `colcon_ws`).
+2.  Ensure the `ur5_simulation` folder is in `src/`.
+3.  Build the package:
+    ```bash
+    colcon build --packages-select ur5_simulation
+    source install/setup.bash
+    ```
+
+### 6. Environment Setup
 Create a conda environment to manage dependencies:
 ```bash
 conda create -n env_isaaclab python=3.8
@@ -96,11 +111,18 @@ Train the diffusion policy using the provided script. This script loads the data
 ```bash
 python 3_train_policy_mod.py
 ```
-*   **Output**: Checkpoints are saved in `outputs/train/my_pusht_diffusion/`.
+*   **Note**: This training process learns the behavior demonstrated in the **Demo Video** above.
+*   **Output**: Checkpoints will be saved in `outputs/train/my_pusht_diffusion/`.
 *   **Logs**: Monitor `train_logs.txt` to see the loss decrease over time.
 
 ### Step 2: Evaluation (Visual)
 Run the trained policy in the ROS 2 + Isaac Sim environment to visually verify performance.
+
+**Prerequisites**:
+*   Isaac Sim must be running with `PushT_custom.usd` loaded.
+*   The MoveIt 2 controller must be active.
+
+**Commands**:
 ```bash
 # Terminal 1: Launch MoveIt Controller
 ros2 launch ur5_moveit_config arm_diffusion_control.launch.py
@@ -126,6 +148,7 @@ The file `train_logs.txt` contains the raw training data.
 
 ---
 
-## Source of Implementation
-This project is built upon the **LeRobot** library by Hugging Face.
-*   **Repository**: [https://github.com/huggingface/lerobot](https://github.com/huggingface/lerobot)
+## References & Source
+*   **Diffusion Policy**: [https://diffusion-policy.cs.columbia.edu/](https://diffusion-policy.cs.columbia.edu/)
+*   **LeRobot Library**: [https://github.com/huggingface/lerobot](https://github.com/huggingface/lerobot)
+*   **MoveIt 2**: [https://moveit.picknik.ai/](https://moveit.picknik.ai/)
