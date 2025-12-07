@@ -1,6 +1,6 @@
 # rl_project_diffusion_policy_visuomotor
 
-## Demo Video for us Runining the diffusion policy on PushT task
+## Demo Video: Diffusion Policy on PushT Task
 
 [![Watch the demo](https://img.youtube.com/vi/CH2lkMY8a9s/0.jpg)](https://youtu.be/CH2lkMY8a9s)
 
@@ -10,89 +10,122 @@
 
 ## Project Report: Visuomotor Policy Learning via Action Diffusion
 
-### Overview
-This project demonstrates **visuomotor robotic manipulation using Diffusion Policy**, a novel reinforcement learning-based framework that enables robots to learn control policies directly from visual inputs (camera feeds). We applied this approach to the **Push-T block manipulation task**, where a robotic arm must push a T-shaped block precisely into a T-shaped target region.
+### 1. Abstract
+This project implements **Diffusion Policy**, a novel reinforcement learning framework that generates robot action sequences by iteratively denoising random noise. We applied this method to the **Push-T block manipulation task**, training a UR5 robotic arm to push a T-shaped block into a target zone using only visual feedback. The system was validated in both 2D (Gym-PushT) and 3D (NVIDIA Isaac Sim) environments.
 
-Our application focuses on:
-*   Teaching a robot to perform goal-directed manipulation from raw sensory data.
-*   Using diffusion-based action generation instead of conventional one-shot policy learning.
-*   Testing and validating performance in both Gym-PushT (2D) and NVIDIA Isaac Sim (3D) environments.
+### 2. Methodology
 
+#### Diffusion Policy
+Unlike traditional policies that map observations directly to actions, Diffusion Policy models the conditional distribution of action trajectories $p(A|O)$. It generates actions by reversing a diffusion process:
+1.  **Forward Process**: Gradually adds Gaussian noise to expert action sequences.
+    $$q(A_k^k | A_k^{k-1}) = \mathcal{N}(\sqrt{\alpha_k} A_k^{k-1}, (1 - \alpha_k) I)$$
+2.  **Reverse Process**: A neural network $\epsilon_\theta$ predicts the noise at each step to recover the original action.
+    $$A_k^{k-1} = \alpha_k (A_k^k - \gamma_k \epsilon_\theta(O_k, A_k^k, k)) + \sqrt{1 - \alpha_k^2} \mathcal{N}(0, I)$$
+
+#### Robot Control Integration
+*   **Inference**: The policy outputs a sequence of end-effector poses (Cartesian space).
+*   **MoveIt 2**: We integrated MoveIt 2 to solve Inverse Kinematics (IK), converting Cartesian poses into joint angles for the UR5 arm while avoiding collisions.
+
+### 3. Experiments & Results
+
+#### Training
+The model was trained on the PushT dataset (206 episodes) for 5000 steps.
+*   **Loss Convergence**: The Mean Squared Error (MSE) loss decreased from an initial ~1.19 to ~0.10, indicating successful learning of the action distribution.
+*   *(See `train_logs.txt` for the complete training history)*.
+
+#### Evaluation
+*   **Simulation**: The policy successfully generalized to the 3D Isaac Sim environment, demonstrating smooth trajectory tracking and successful block pushing.
+*   **Metrics**: Success was defined by the overlap (IoU) between the block and the target.
+
+### 4. Discussion & Future Work
+*   **Sim-to-Real Gap**: While successful in simulation, real-world deployment faces challenges due to physical discrepancies (friction, sensor noise).
+*   **Inference Latency**: The iterative denoising process introduces latency, which requires optimization for high-frequency control.
+*   **Future Work**: We plan to collect real-world data to fine-tune the model and implement domain randomization to improve robustness.
+
+---
 
 ## Installation & Setup
 
 ### 1. Download Project Files
-**Important**: The full simulation environment including the `ur5_simulation` assets is available in the project zip file.
-*   [Download Project Zip (Google Drive)](https://drive.google.com/file/d/126dnCWyt8QnDNPsZq9z9n-ZXegeQzqoE/view?usp=sharing)
-*   **Action**: Download and unzip the file. Ensure the `ur5_simulation` directory is present in your workspace.
+**CRITICAL**: You must download the full project repository, which includes the custom `ur5_simulation` assets and configuration files.
+*   [**Download Project Zip (Google Drive)**](https://drive.google.com/file/d/126dnCWyt8QnDNPsZq9z9n-ZXegeQzqoE/view?usp=sharing)
+*   **Action**: Download, unzip, and place the `ur5_simulation` folder in your workspace.
 
 ### 2. System Requirements
-*   **OS**: Ubuntu 22.04
-*   **GPU**: NVIDIA GPU with CUDA support (Recommended)
+*   **OS**: Ubuntu 22.04 (Recommended) or 20.04
+*   **GPU**: NVIDIA GPU with CUDA support
 
-### 3. Install NVIDIA Isaac Sim
-Download and install NVIDIA Isaac Sim from the [NVIDIA Omniverse](https://developer.nvidia.com/isaac-sim) website. Follow the official installation guide for your system.
-
-### 4. Install ROS 2 & MoveIt 2
-This project uses ROS 2 for robot control.
-*   **ROS 2**: Install ROS 2 (Humble Hawksbill recommended for Ubuntu 22.04). [Installation Guide](https://docs.ros.org/en/humble/Installation.html)
+### 3. Install Dependencies
+*   **NVIDIA Isaac Sim**: Download and install from the [Isaac Sim Archive](https://developer.nvidia.com/isaac-sim-archive).
+*   **ROS 2 Humble**: Follow the [official installation guide](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html) for Ubuntu 22.04.
 *   **MoveIt 2**: Install MoveIt 2 for motion planning.
     ```bash
     sudo apt install ros-humble-moveit
     ```
+*   **LeRobot**: Clone and install the Hugging Face library.
+    ```bash
+    git clone https://github.com/huggingface/lerobot.git
+    cd lerobot
+    pip install -e ".[pusht]"
+    ```
 
-### 5. Install LeRobot
-Clone and install the Hugging Face `lerobot` library, which provides the Diffusion Policy implementation.
-```bash
-git clone https://github.com/huggingface/lerobot.git
-cd lerobot
-pip install -e .
-```
-
-### 6. Environment Setup
-Create a dedicated conda environment for the project to manage dependencies.
+### 4. Environment Setup
+Create a conda environment to manage dependencies:
 ```bash
 conda create -n env_isaaclab python=3.8
 conda activate env_isaaclab
-# Install additional dependencies
-pip install torch torchvision torchaudio
-pip install gym
+pip install torch torchvision torchaudio gym
 ```
 
 ---
 
-## Usage
+## Simulation Setup
 
-### Training
-To train the diffusion policy on the PushT task:
+To run the simulation with our custom assets:
+1.  Launch **NVIDIA Isaac Sim**.
+2.  Go to **File > Open**.
+3.  Navigate to the unzipped project folder and select: `urs_simulation/PushT_custom.usd`.
+4.  This will load the UR5 robot, the table, the T-block, and the target zone.
+
+---
+
+## Workflow: Train, Evaluate, Metrics
+
+### Step 1: Training
+Train the diffusion policy using the provided script. This script loads the dataset and optimizes the policy network.
 ```bash
 python 3_train_policy_mod.py
 ```
-*   This script initializes the `DiffusionPolicy` with the `DiffusionConfig`.
-*   It loads the dataset from `lerobot/my_pusht`.
-*   Training logs will be saved to `outputs/train/my_pusht_diffusion/`.
+*   **Output**: Checkpoints are saved in `outputs/train/my_pusht_diffusion/`.
+*   **Logs**: Monitor `train_logs.txt` to see the loss decrease over time.
 
-### Evaluation
-To evaluate the trained policy in the ROS environment:
+### Step 2: Evaluation (Visual)
+Run the trained policy in the ROS 2 + Isaac Sim environment to visually verify performance.
 ```bash
+# Terminal 1: Launch MoveIt Controller
+ros2 launch ur5_moveit_config arm_diffusion_control.launch.py
+
+# Terminal 2: Run Inference
 python 2_evaluate_pretrained_policy_ROS.py
 ```
-*   Ensure ROS 2 and Isaac Sim are running.
-*   This script loads the checkpoint and executes the policy on the robot.
+*   **Action**: Watch the robot in Isaac Sim. It should pick up the block and push it to the target.
+
+### Step 3: Collect Metrics
+To quantitatively evaluate the model (Success Rate), run the evaluation loop:
+```bash
+python 2_evaluate_pretrained_policy_ROS_eval.py
+```
+*   This script runs multiple episodes and prints the success rate based on the final block position.
 
 ---
 
-## Results
-The model was trained for 5000 steps. The training loss converged significantly, demonstrating the policy's ability to learn the action distribution.
-
-*   **Initial Loss**: ~1.19
-*   **Final Loss (approx)**: ~0.10
-*   **Convergence**: The loss stabilized around 0.1 after approximately 500 steps, indicating effective learning of the denoising process.
-
-*(See `train_logs.txt` for detailed step-by-step loss metrics)*
+## Training Logs
+The file `train_logs.txt` contains the raw training data.
+*   **Format**: `step: <step_number> loss: <mse_loss>`
+*   **Usage**: You can parse this file to plot the training curve and verify convergence.
 
 ---
 
 ## Source of Implementation
-This project utilizes the **LeRobot** library by Hugging Face for the Diffusion Policy implementation.
+This project is built upon the **LeRobot** library by Hugging Face.
 *   **Repository**: [https://github.com/huggingface/lerobot](https://github.com/huggingface/lerobot)
