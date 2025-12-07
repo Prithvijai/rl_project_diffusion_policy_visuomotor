@@ -1,6 +1,6 @@
 # rl_project_diffusion_policy_visuomotor
 
-## Demo Video: Diffusion Policy on PushT Task
+## Demo Video (Our Setup): Diffusion Policy on PushT Task
 
 [![Watch the demo](https://img.youtube.com/vi/CH2lkMY8a9s/0.jpg)](https://youtu.be/CH2lkMY8a9s)
 
@@ -123,6 +123,7 @@ Run the trained policy in the ROS 2 + Isaac Sim environment to visually verify p
 *   The MoveIt 2 controller must be active.
 
 **Commands**:
+Use these commands:
 ```bash
 # Terminal 1: Launch MoveIt Controller
 ros2 launch ur5_moveit_config arm_diffusion_control.launch.py
